@@ -10,7 +10,7 @@ export function setupComponent(instance) {
 }
 
 function setupStatefulComponent(instance) {
-  const component = instance.type;
+  const component = instance.type; // 根据组件实例，获取到组件
   const { setup } = component; //解构setup
   if (setup) {
     // setup()返回的可能是function（也就是返回一个render函数），可能是object
@@ -31,7 +31,7 @@ function handleSetupResult(instance, setupResult) {
 
 function finishComponentSetup(instance) {
   const Component = instance.type;
-  if (!Component.render) {
-    Component.render = instance.render;
+  if (Component.render) {
+    instance.render = Component.render;
   }
 }
