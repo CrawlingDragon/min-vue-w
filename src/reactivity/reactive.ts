@@ -1,3 +1,4 @@
+import { isObject } from '../shared/index';
 import { mutableHandlers, readonlyHandlers, shallowReadonlyHandlers } from './basehandlers';
 
 export const enum ReactiveFlags {
@@ -7,6 +8,10 @@ export const enum ReactiveFlags {
 
 function createReactiveObject(raw, handlers) {
   // 为了更加的语义化，知道函数在干什么
+  if (!isObject(raw)) {
+    console.warn(`target ${raw} 不是一个对象`);
+    return;
+  }
   return new Proxy(raw, handlers);
 }
 
