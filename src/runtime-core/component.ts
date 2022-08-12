@@ -3,6 +3,7 @@ import { initProps } from './componentProps';
 import { shallowReadonly } from '../reactivity/reactive';
 import { emit } from './componentEmit';
 import { initSlots } from './componentSlots';
+import { proxyRefs } from '../reactivity/ref';
 
 export function createComponent(vnode, parent) {
   const component = {
@@ -13,6 +14,8 @@ export function createComponent(vnode, parent) {
     props: {},
     slot: {},
     emit: () => {},
+    isMounted: false, // 标记组件是否挂载，判断是 挂载 or 更新 时机
+    subTree: {}, // 用于标记组件的 虚拟dom树
     parent,
     provides: parent ? parent.provides : {}, // 用于provide
   };
@@ -50,7 +53,8 @@ function handleSetupResult(instance, setupResult) {
   // todo function
   // 暂时只处理object 结构
   if (typeof setupResult === 'object') {
-    instance.setupState = setupResult;
+    // proxyRefs 判断值是否为ref，是就返回.value，否就返回本身
+    instance.setupState = proxyRefs(setupResult);
   }
   // 最后要保证组件的render是有值的
   finishComponentSetup(instance);
