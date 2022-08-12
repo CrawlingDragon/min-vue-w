@@ -3,7 +3,8 @@ import { initProps } from './componentProps';
 import { shallowReadonly } from '../reactivity/reactive';
 import { emit } from './componentEmit';
 import { initSlots } from './componentSlots';
-export function createComponent(vnode) {
+
+export function createComponent(vnode, parent) {
   const component = {
     vnode: vnode,
     ...vnode,
@@ -12,6 +13,8 @@ export function createComponent(vnode) {
     props: {},
     slot: {},
     emit: () => {},
+    parent,
+    provides: parent ? parent.provides : {}, // 用于provide
   };
   // console.log('component.emit :>> before ', component.emit);
   component.emit = emit.bind(null, component);
@@ -35,8 +38,10 @@ function setupStatefulComponent(instance) {
   instance.proxy = proxy;
   const { setup } = component; //解构setup
   if (setup) {
+    setCurrentInstance(instance); // 对currentInstance 进行赋值
     // setup()返回的可能是function（也就是返回一个render函数），可能是object
     const setupResult = setup(shallowReadonly(instance.props), { emit: instance.emit }); //props 是一个只读，不能修改
+    setCurrentInstance(null); //重置currentInstance
     handleSetupResult(instance, setupResult); //用handleSetupResult函数处理 这个结构
   }
 }
@@ -56,4 +61,18 @@ function finishComponentSetup(instance) {
   if (Component.render) {
     instance.render = Component.render;
   }
+}
+
+// 声明一个全局的变量，保存 当前实例 instance
+let currentInstance = null;
+export function getCurrentInstance() {
+  // 思路大致：在setup函数内进行赋值
+  // 然后重置为null
+  return currentInstance;
+}
+
+export function setCurrentInstance(instance) {
+  // 相比较 直接用currentInstance =  instance
+  // 用函数 setCurrentInstance(), 更利于调试，相当于一个中间件，
+  currentInstance = instance;
 }
