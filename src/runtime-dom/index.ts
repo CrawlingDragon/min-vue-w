@@ -3,16 +3,22 @@ import { createRenderer } from '../runtime-core/index';
 function createElement(type) {
   return document.createElement(type);
 }
-function patchProps(el, key, val) {
+function patchProps(el, key, prevVal, nextVal) {
   const isOn = (key: any) => {
     //如果是以on为开头，第三个字符串为答谢的A-Z，则命中正则
     return /^on[A-Z]/.test(key);
   };
+  // debugger;
   if (isOn(key)) {
     const eventName = key.slice(2).toLocaleLowerCase();
-    el.addEventListener(eventName, val);
+    el.addEventListener(eventName, nextVal);
   } else {
-    el.setAttribute(key, val);
+    // 如果新的值等于undefined or null ，则删除这个属性
+    if (nextVal === undefined || nextVal === null) {
+      el.removeAttribute(key);
+    } else {
+      el.setAttribute(key, nextVal);
+    }
   }
 }
 function inset(el, parent) {

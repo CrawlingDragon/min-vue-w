@@ -1,5 +1,5 @@
 import { createComponent, setupComponent } from './component';
-import { isObject } from '../shared/index';
+import { EMPTY_OBJ, isObject } from '../shared/index';
 import { ShapeFlags } from '../shared/shapeFlags';
 import { Fragment, Text } from './vnode';
 import { createAppApi } from './createApp';
@@ -61,17 +61,45 @@ export function createRenderer(options) {
     }
   }
   function updateElement(n1, n2, container) {
+    // 更新 element
     console.log('updateElement :>> ');
     console.log('n1 :>> ', n1);
     console.log('n2 :>> ', n2);
+    const el = (n2.el = n1.el);
+    const newProps = n2.props || EMPTY_OBJ;
+    const oldProps = n1.props || EMPTY_OBJ;
+    updateElementProps(el, oldProps, newProps);
   }
+
+  function updateElementProps(el, oldProps, newProps) {
+    // 更新element的props
+    //第一种情况给新属性赋值新的值 foo -> new_foo
+    if (newProps !== oldProps) {
+      for (let key in newProps) {
+        let newVal = newProps[key];
+        let oldVal = oldProps[key];
+        if (newVal !== oldVal) {
+          hostPatchProps(el, key, oldVal, newVal);
+        }
+      }
+    }
+    // 第二种情况，当旧的属性，没有出现在新的属性之中
+    if (newProps !== EMPTY_OBJ) {
+      for (let key in oldProps) {
+        if (!(key in newProps)) {
+          hostPatchProps(el, key, oldProps[key], null);
+        }
+      }
+    }
+  }
+
   function mountElement(n1, n2: any, container, parentComponent) {
     const el = (n2.el = hostCreateElement(n2.type));
     // 根据h函数上的第二个参数，props，设置el的setAttribute
     const { props } = n2;
     for (let key in props) {
       let val = props[key];
-      hostPatchProps(el, key, val);
+      hostPatchProps(el, key, null, val);
       // //正则判断是否是事件
       // const isOn = (key: any) => {
       //   //如果是以on为开头，第三个字符串为答谢的A-Z，则命中正则
