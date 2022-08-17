@@ -21,12 +21,24 @@ function patchProps(el, key, prevVal, nextVal) {
     }
   }
 }
-function inset(el, parent) {
-  parent.appendChild(el);
+function inset(children, parent, anchor = null) {
+  // 添加元素
+  // parent.appendChild(el);
+  parent.insertBefore(children, anchor || null);
+}
+
+function remove(children) {
+  let parent = children.parentNode;
+  if (parent) {
+    parent.removeChild(children);
+  }
+}
+function setElementText(el, text) {
+  el.textContent = text;
 }
 
 // 执行render函数，传递参数，设置 createElement,patchProps,inset方法 ，这里是dom操作的方式
-const renderer: any = createRenderer({ createElement, patchProps, inset });
+const renderer: any = createRenderer({ createElement, patchProps, inset, remove, setElementText });
 
 export function createApp(...arg) {
   // render.createApp 已经把render函数执行了一遍
