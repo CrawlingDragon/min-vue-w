@@ -8,8 +8,10 @@ import { proxyRefs } from '../reactivity/ref';
 export function createComponent(vnode, parent) {
   const component = {
     vnode: vnode,
+    next: null, // 用来存储下一次更新的vnode
     ...vnode,
     type: vnode.type,
+    update: null, // 用来存储更新函数，也就是 effect(updateFn) 返回的update
     setupState: {},
     props: {},
     slot: {},

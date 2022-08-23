@@ -36,7 +36,7 @@ export function createRenderer(options) {
           processElement(n1, n2, container, parentComponent, anchor);
         } else if (n2.shapeFlag & ShapeFlags.STATEFUL_COMPONENT) {
           // type 为 object ，说明为component
-          processComponent(n2, container, parentComponent);
+          processComponent(n1, n2, container, parentComponent);
           // 暂时只处理component类型
         }
         break;
@@ -278,19 +278,49 @@ export function createRenderer(options) {
       patch(null, v, container, parentComponent);
     });
   }
-  function processComponent(vNode, container, parentComponent) {
-    mountComponent(vNode, container, parentComponent); //既然是处理组件，那就先挂载组件
+  function processComponent(n1, n2, container, parentComponent) {
+    if (!n1) {
+      mountComponent(n2, container, parentComponent); //既然是处理组件，那就先挂载组件
+    } else {
+      // 更新组件
+      updateComponent(n1, n2);
+    }
   }
 
+  function updateComponent(n1, n2) {
+    let instance = (n2.component = n1.component);
+    if (shouldUpdateComponent(n1, n2)) {
+      // n2.next = n1.next;
+      instance.next = n2;
+      // 取出在n1上的组件上的update函数
+      //执行update 函数，更新数据
+      instance.update();
+    } else {
+      n2.el = n1.el;
+      instance.vnode = n2.vnode;
+    }
+  }
+  function shouldUpdateComponent(n1, n2) {
+    const { props: prevProps } = n1;
+    const { props: nextProps } = n2;
+    for (let key in nextProps) {
+      if (prevProps[key] !== nextProps[key]) {
+        return true;
+      }
+    }
+
+    return false;
+  }
   function mountComponent(initialVNode, container, parentComponent) {
     //挂载组件的时候，先创建一个组件实例 instance
     const instance = createComponent(initialVNode, parentComponent);
+    initialVNode.component = instance;
     setupComponent(instance); // 安装组件实例
     setupRenderEffect(instance, initialVNode, container);
   }
   function setupRenderEffect(instance, initialVNode, container) {
     // 利用effect对subTree 进行依赖收集
-    effect(() => {
+    instance.update = effect(() => {
       // 初始化，也就是 第一次挂载时
       if (!instance.isMounted) {
         console.log('init :>> ');
@@ -305,6 +335,11 @@ export function createRenderer(options) {
         instance.isMounted = true;
       } else {
         const { proxy } = instance;
+        let { next, vnode } = instance;
+        if (next) {
+          next.el = vnode.el;
+          updateComponentPreRender(instance, next);
+        }
         const subTree = instance.render.call(proxy);
         const prevSubTree = instance.subTree; //上一次的subTree
         patch(prevSubTree, subTree, container, instance);
@@ -316,4 +351,10 @@ export function createRenderer(options) {
   return {
     createApp: createAppApi(render),
   };
+}
+function updateComponentPreRender(instance, nextVnode) {
+  instance.vnode = nextVnode;
+  instance.next = null;
+
+  instance.props = nextVnode.props;
 }

@@ -6,6 +6,7 @@ export function createVNode(type, props?, children?) {
   const vNode = {
     type,
     props,
+    component: null,
     key: props && props.key,
     children,
     el: null,

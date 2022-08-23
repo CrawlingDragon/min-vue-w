@@ -1,6 +1,7 @@
 const PublicPropertiesMap = {
   $el: (instance) => instance.vnode.el,
   $slots: (instance) => instance.slots,
+  $props: (instance) => instance.props,
 };
 
 // 用于ctx的proxy的handler函数封装
