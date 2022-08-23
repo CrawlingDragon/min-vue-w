@@ -4,6 +4,7 @@ import { ShapeFlags } from '../shared/shapeFlags';
 import { Fragment, Text } from './vnode';
 import { createAppApi } from './createApp';
 import { effect } from '../reactivity/effect';
+import { queueJobs } from './scheduler';
 
 export function createRenderer(options) {
   const {
@@ -320,33 +321,41 @@ export function createRenderer(options) {
   }
   function setupRenderEffect(instance, initialVNode, container) {
     // 利用effect对subTree 进行依赖收集
-    instance.update = effect(() => {
-      // 初始化，也就是 第一次挂载时
-      if (!instance.isMounted) {
-        console.log('init :>> ');
-        const { proxy } = instance;
-        const subTree = (instance.subTree = instance.render.call(proxy));
-        //vnode -> patch
-        // vnode -> element - mountElement
-        patch(null, subTree, container, instance);
+    instance.update = effect(
+      () => {
+        // 初始化，也就是 第一次挂载时
+        if (!instance.isMounted) {
+          console.log('init :>> ');
+          const { proxy } = instance;
+          const subTree = (instance.subTree = instance.render.call(proxy));
+          //vnode -> patch
+          // vnode -> element - mountElement
+          patch(null, subTree, container, instance);
 
-        //当所有的element都patch完，把instance.el赋值给vnode.el
-        initialVNode.el = subTree.el;
-        instance.isMounted = true;
-      } else {
-        const { proxy } = instance;
-        let { next, vnode } = instance;
-        if (next) {
-          next.el = vnode.el;
-          updateComponentPreRender(instance, next);
+          //当所有的element都patch完，把instance.el赋值给vnode.el
+          initialVNode.el = subTree.el;
+          instance.isMounted = true;
+        } else {
+          const { proxy } = instance;
+          let { next, vnode } = instance;
+          if (next) {
+            next.el = vnode.el;
+            updateComponentPreRender(instance, next);
+          }
+          const subTree = instance.render.call(proxy);
+          const prevSubTree = instance.subTree; //上一次的subTree
+          patch(prevSubTree, subTree, container, instance);
+          instance.subTree = subTree;
+          // console.log('update :>> ');
         }
-        const subTree = instance.render.call(proxy);
-        const prevSubTree = instance.subTree; //上一次的subTree
-        patch(prevSubTree, subTree, container, instance);
-        instance.subTree = subTree;
-        console.log('update :>> ');
+      },
+      {
+        scheduler() {
+          console.log('update :__scheduler');
+          queueJobs(instance.update);
+        },
       }
-    });
+    );
   }
   return {
     createApp: createAppApi(render),

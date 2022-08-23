@@ -1,3 +1,4 @@
+export { nextTick } from './scheduler';
 export { createRenderer } from './renderer';
 export { createTextVnode } from './vnode';
 export { renderSlots } from './helpers/renderSlots';
