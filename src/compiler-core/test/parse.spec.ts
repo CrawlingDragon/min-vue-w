@@ -77,7 +77,7 @@ describe('Parse', () => {
     });
   });
 
-  test.only('should throw error when lock and tag', () => {
+  test('should throw error when lock and tag', () => {
     // 实现步骤
     // 1： 对element标签收集，在isEnd内，依次判断收集的element标签
     // 2: 在parseElement时，对起始标签和结束标签不一样的时候，

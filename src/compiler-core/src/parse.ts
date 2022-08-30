@@ -69,8 +69,8 @@ function isEnd(context, ancestors) {
   if (s.startsWith('</')) {
     for (let i = 0; i < ancestors.length; i++) {
       let tag = ancestors[i].tag; // 收集数组内的 tag
-      // let sourceTag = s.slice(2, 2 + tag.length); // source的</div>
-      if (startsWithEndTagOpen(s, tag) === tag) {
+      let sourceTag = s.slice(2, 2 + tag.length); // source的</div>
+      if (tag === sourceTag) {
         return true;
       }
     }
@@ -116,11 +116,11 @@ function parseElement(context, ancestors) {
   let children = parseChildren(context, ancestors);
   element.children = children;
 
-  ancestors.pop(); //在处理完element标签后，弹出末尾
-  parseTag(context, TagType.END);
-  if (startsWithEndTagOpen(context.source, tag) !== tag) {
+  if (context.source.slice(2, 2 + tag.length) !== tag) {
     throw new Error('缺少标签：' + tag);
   }
+  ancestors.pop(); //在处理完element标签后，弹出末尾
+  parseTag(context, TagType.END);
 
   return element;
 }
@@ -149,8 +149,4 @@ function createParseContent(content) {
 
 function advanceBy(context, length) {
   context.source = context.source.slice(length);
-}
-
-function startsWithEndTagOpen(source, tag) {
-  return source.slice(2, 2 + tag.length);
 }
